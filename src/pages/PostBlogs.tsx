@@ -13,6 +13,10 @@ import { addBlog } from "@/service/api/addBlog";
 
 const { Dragger } = Upload;
 
+const LoadingSpinner = () => (
+  <div className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-solid border-current border-r-transparent motion-reduce:animate-[spin_1.5s_linear_infinite] align-[-0.125em]" />
+);
+
 const PostBlogs = () => {
   const navigate = useNavigate();
 
@@ -30,7 +34,6 @@ const PostBlogs = () => {
 
   const handleSubmit = async (values: IBlog) => {
     try {
-      console.log("Form Values:", values);
 
       const formData = new FormData();
       formData.append("title", values.title);
@@ -84,7 +87,6 @@ const PostBlogs = () => {
               className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
             />
             <div className="h-6">
-              {" "}
               {formik.touched.title && formik.errors.title && (
                 <div className="mt-1 text-sm text-red-600">
                   {formik.errors.title}
@@ -140,7 +142,6 @@ const PostBlogs = () => {
               </ImgCrop>
             )}
             <div className="h-6">
-              {" "}
               {formik.touched.image && formik.errors.image && (
                 <div className="mt-1 text-sm text-red-600">
                   {formik.errors.image}
@@ -165,7 +166,6 @@ const PostBlogs = () => {
               onBlur={() => formik.setFieldTouched("content", true)}
             />
             <div className="h-6">
-              {" "}
               {formik.touched.content && formik.errors.content && (
                 <div className="mt-1 text-sm text-red-600">
                   {formik.errors.content}
@@ -178,9 +178,16 @@ const PostBlogs = () => {
             <button
               type="submit"
               disabled={formik.isSubmitting}
-              className="w-full rounded-md bg-black px-4 py-2 text-sm font-semibold text-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50"
+              className="w-full rounded-md bg-black px-4 py-2 text-sm font-semibold text-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 flex items-center justify-center space-x-2"
             >
-              {formik.isSubmitting ? "Creating..." : "Create Post"}
+              {formik.isSubmitting ? (
+                <>
+                  <LoadingSpinner />
+                  <span>Creating...</span>
+                </>
+              ) : (
+                "Create Post"
+              )}
             </button>
           </div>
         </form>

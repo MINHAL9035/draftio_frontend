@@ -9,9 +9,10 @@ export interface IBlog {
   };
   image?: File | null;
   createdAt?: string;
+  total?: number;
 }
 export interface IBlogResponse {
-  _id: string ;
+  _id: string;
   title: string;
   content: string;
   authorId?: {

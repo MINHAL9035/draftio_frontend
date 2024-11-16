@@ -2,7 +2,7 @@ import Footer from "@/components/Footer";
 import Navbar from "@/components/Navbar";
 import { IBlogResponse } from "@/interfaces/blog.interface";
 import { getAllBlogs } from "@/service/api/addBlog";
-import { message, Modal } from "antd";
+import { message, Modal, Pagination } from "antd";
 import { format, formatDistanceToNow } from "date-fns";
 import { useEffect, useState } from "react";
 import {
@@ -15,17 +15,29 @@ import { useNavigate } from "react-router-dom";
 import { ChevronRight, Edit2, MoreVertical, Trash2 } from "lucide-react";
 import { ExclamationCircleOutlined } from "@ant-design/icons";
 import { deleteBlog } from "@/service/api/deleteBlog";
+import { RootState } from "@/redux/store/store";
+import { useSelector } from "react-redux";
+import { PaginatedBlogResponse } from "@/interfaces/authRes.interface";
 const { confirm } = Modal;
 
 const Blogs = () => {
   const [blogs, setBlogs] = useState<IBlogResponse[]>([]);
-  const navigate = useNavigate();
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalBlogs, setTotalBlogs] = useState(0);
+  const PAGE_SIZE = 5;
 
-  const fetchBlogs = async () => {
+  const navigate = useNavigate();
+  const userInfo = useSelector((state: RootState) => state.auth.userInfo);
+
+  const fetchBlogs = async (page: number = 1) => {
     try {
-      const response = await getAllBlogs();
+      const response = await getAllBlogs(page, PAGE_SIZE);
       if (response.status === 200 && response.data) {
-        setBlogs(response.data as IBlogResponse[]);
+        const paginatedData = response.data as PaginatedBlogResponse;
+        if ("blogs" in paginatedData && "total" in paginatedData) {
+          setBlogs(paginatedData.blogs);
+          setTotalBlogs(paginatedData.total);
+        }
       }
     } catch (error) {
       console.error("Error fetching blogs:", error);
@@ -34,10 +46,13 @@ const Blogs = () => {
   };
 
   useEffect(() => {
-    fetchBlogs();
-  }, []);
+    fetchBlogs(currentPage);
+  }, [currentPage]);
 
-  console.log("blogs", blogs);
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
 
   const truncateText = (text: string, maxLength: number) => {
     if (!text) return "";
@@ -121,7 +136,7 @@ const Blogs = () => {
                     <div
                       className="text-gray-600"
                       dangerouslySetInnerHTML={{
-                        __html: truncateText(blog.content, 200),
+                        __html: truncateText(blog.content, 50),
                       }}
                     />
                     <button
@@ -140,27 +155,38 @@ const Blogs = () => {
                       className="w-full h-56 object-cover rounded-lg"
                     />
                   </div>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger className="hover:bg-gray-100 p-2 rounded-full">
-                      <MoreVertical className="h-5 w-5 text-gray-500" />
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent>
-                      <DropdownMenuItem onClick={() => handleEdit(blog._id)}>
-                        <Edit2 className="h-4 w-4 mr-2" />
-                        Edit
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        className="text-red-600"
-                        onClick={() => showDeleteConfirm(blog._id)}
-                      >
-                        <Trash2 className="h-4 w-4 mr-2" />
-                        Delete
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                  {userInfo?._id === blog.authorId?._id && (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger className="hover:bg-gray-100 p-2 rounded-full">
+                        <MoreVertical className="h-5 w-5 text-gray-500" />
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent>
+                        <DropdownMenuItem onClick={() => handleEdit(blog._id)}>
+                          <Edit2 className="h-4 w-4 mr-2" />
+                          Edit
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          className="text-red-600"
+                          onClick={() => showDeleteConfirm(blog._id)}
+                        >
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  )}
                 </div>
               </article>
             ))}
+          </div>
+          <div className="mt-8 flex justify-center">
+            <Pagination
+              current={currentPage}
+              total={totalBlogs}
+              pageSize={PAGE_SIZE}
+              onChange={handlePageChange}
+              showSizeChanger={false}
+            />
           </div>
         </main>
       </div>
